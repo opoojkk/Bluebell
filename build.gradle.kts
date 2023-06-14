@@ -26,6 +26,7 @@ kotlin {
                 implementation("com.alibaba:easyexcel:3.3.2")
                 implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.7")
                 implementation("org.apache.logging.log4j:log4j-core:2.7")
+                implementation("androidx.datastore:datastore-preferences-core:1.1.0-dev01")
             }
         }
         val jvmTest by getting
