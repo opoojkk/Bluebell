@@ -9,19 +9,12 @@ import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
 import androidx.datastore.preferences.core.*
-import androidx.datastore.preferences.core.longPreferencesKey
 import com.alibaba.excel.EasyExcel
 import com.alibaba.excel.context.AnalysisContext
 import com.alibaba.excel.read.listener.ReadListener
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.map
 import java.awt.FileDialog
 import java.io.File
-import java.nio.channels.IllegalSelectorException
-import java.util.IllegalFormatException
-import kotlin.io.println
 import kotlin.math.absoluteValue
 import kotlin.random.Random
 
@@ -125,10 +118,24 @@ class PickUpBean {
 
     fun generate(): String {
         val stringBuilder = StringBuilder()
-        for (item in result) {
+        for (day in 0..4) {
+            stringBuilder.append(dayOfTheWeek(day))
+            stringBuilder.append(":")
+            val item = result[day]
             stringBuilder.append(item.name)
             stringBuilder.append("\n")
         }
         return stringBuilder.toString()
+    }
+
+    private fun dayOfTheWeek(day: Int): String {
+        return when (day) {
+            0 -> "星期一"
+            1 -> "星期二"
+            2 -> "星期三"
+            3 -> "星期四"
+            4 -> "星期五"
+            else -> "星期六"
+        }
     }
 }
