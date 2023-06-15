@@ -14,26 +14,26 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
+import bean.Item
+import bean.PickUpBean
 import com.alibaba.excel.EasyExcel
 import com.alibaba.excel.context.AnalysisContext
 import com.alibaba.excel.read.listener.ReadListener
-import kotlinx.coroutines.DelicateCoroutinesApi
+import exception.IllegalFileFormatException
 import java.awt.FileDialog
 import java.io.File
-import kotlin.math.absoluteValue
-import kotlin.random.Random
 
 
-@OptIn(DelicateCoroutinesApi::class, ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 @Preview
 fun App() {
-    var pathFile by remember { mutableStateOf("") }
     var randomResult by remember { mutableStateOf("") }
     var duplicateAllowed by remember { mutableStateOf(false) }
     var selectedFile by remember { mutableStateOf<File?>(null) }
 
-    var selectFileDialogEnabled by remember { mutableStateOf(false) }
+    var state by remember { mutableStateOf(StateConstant.Normal) }
+
     MaterialTheme {
         Column(modifier = Modifier.wrapContentHeight().padding(12.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -49,27 +49,26 @@ fun App() {
                         unfocusedIndicatorColor = Color.Transparent
                     )
                 )
-//                Text(
-//                    text = selectedFile?.name ?: pathFile,
-//                    modifier = Modifier
-//                        .weight(1F)
-//                        .wrapContentHeight()
-//                        .padding(start = 8.dp)
-//                        .background(Color.LightGray, RoundedCornerShape(10f))
-//                )
                 Button(
                     modifier = Modifier.padding(start = 8.dp),
                     onClick = {
                         val file = try {
                             selectFile()
-                        } catch (e: Exception) {
-                            // TODO: 弹窗
+                        } catch (e: IllegalArgumentException) {
+                            state = StateConstant.CantFindFile
+                            return@Button
+                        } catch (e: IllegalFileFormatException) {
+                            state = StateConstant.WrongFileFormat
                             return@Button
                         }
                         selectedFile = file
-                    }) {
+                    }
+                ) {
                     Text("选择文件")
                 }
+                alertAlertDialog(
+                    state = state,
+                    onDismiss = { state = StateConstant.Normal })
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Checkbox(
@@ -91,48 +90,31 @@ fun App() {
             }
             Button(modifier = Modifier.fillMaxWidth(), onClick = {
                 selectedFile ?: let {
-                    selectFileDialogEnabled = true
+                    state = StateConstant.NoFileSelected
                     return@Button
                 }
-                selectedFile?.let { file ->
-                    readFileParseResult(file, callback = {
-                        randomResult = it
+                try {
+                    readFileParseResult(selectedFile!!, callback = {
+                        if (it.originalSize() < 5 && !duplicateAllowed) {
+                            throw IllegalArgumentException()
+                        }
+                        randomResult = it.processPickUpResult()
                     })
+                } catch (illegalArgumentException: IllegalArgumentException) {
+                    state = StateConstant.NotEnoughOptions
                 }
+
             }) {
                 Text("生成")
             }
-            selectFileDialog(selectFileDialogEnabled, dismissCallback = {
-                selectFileDialogEnabled = false
-            })
+            alertAlertDialog(
+                state = state,
+                onDismiss = { state = StateConstant.Normal })
         }
     }
 }
 
-@OptIn(ExperimentalMaterialApi::class)
-@Composable
-private fun selectFileDialog(selectFileDialogEnabled: Boolean, dismissCallback: () -> Unit) {
-    if (!selectFileDialogEnabled) {
-        return
-    }
-    AlertDialog(
-        onDismissRequest = { dismissCallback() },
-        modifier = Modifier
-            .padding(28.dp)
-            .wrapContentWidth()
-            .wrapContentHeight(),
-        title = null,
-        text = {
-            Text("请先选择文件")
-        },
-        confirmButton = {
-            TextButton(onClick = { dismissCallback() }) {
-                Text(text = "OK")
-            }
-        })
-}
-
-private fun readFileParseResult(file: File, callback: (String) -> Unit) {
+private fun readFileParseResult(file: File, callback: (PickUpBean) -> Unit) {
     val pickUpBean = PickUpBean()
     EasyExcel.read(file.path, Item::class.java, object : ReadListener<Item> {
         override fun invoke(data: Item?, context: AnalysisContext?) {
@@ -144,7 +126,7 @@ private fun readFileParseResult(file: File, callback: (String) -> Unit) {
         override fun doAfterAllAnalysed(context: AnalysisContext?) {
             println("done")
             pickUpBean.create()
-            callback(pickUpBean.processPickUpResult())
+            callback(pickUpBean)
         }
     }).doReadAll()
 }
@@ -156,12 +138,63 @@ private fun selectFile(): File {
     println("path: $path")
     val file = File(path)
     if (!file.exists() || !file.isFile) {
-        throw Exception("文件不存在")
+        throw IllegalArgumentException("cant find file")
     }
     if (!file.path.contains(".xlsx")) {
-        throw Exception("文件格式错误")
+        throw IllegalFileFormatException("error file format")
     }
     return file
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+private fun alertAlertDialog(
+    state: StateConstant,
+    onDismiss: () -> Unit
+) {
+    if (state == StateConstant.Normal) {
+        return
+    }
+
+    val textContent = when (state) {
+        StateConstant.NotEnoughOptions -> {
+            "小笨蛋，选项不够还不让重复，\n怎么生成呢?"
+        }
+
+        StateConstant.NoFileSelected -> {
+            "小笨蛋，先选一个文件"
+        }
+
+        StateConstant.CantFindFile -> {
+            "小笨蛋，刚选的路径找不到文件了"
+        }
+
+        StateConstant.WrongFileFormat -> {
+            "小笨蛋，得是Excel的格式"
+        }
+
+        else -> {
+            ""
+        }
+
+    }
+    AlertDialog(
+        onDismissRequest = { onDismiss() },
+        modifier = Modifier
+            .padding(28.dp)
+            .wrapContentWidth()
+            .wrapContentHeight(),
+        title = null,
+        text = {
+            Text(text = textContent)
+        },
+
+        confirmButton = {
+            TextButton(onClick = { onDismiss() }) {
+                Text(text = "OK")
+            }
+        }
+    )
 }
 
 fun main() = application {
@@ -171,55 +204,5 @@ fun main() = application {
         onCloseRequest = ::exitApplication
     ) {
         App()
-    }
-}
-
-class Item() {
-    var name: String = ""
-    override fun toString(): String {
-        return "Item(name='$name')"
-    }
-
-}
-
-class PickUpBean {
-    private val original: ArrayList<Item> = ArrayList()
-    private val result: ArrayList<Item> = ArrayList()
-
-    fun add(item: Item) {
-        original.add(item)
-    }
-
-    fun create() {
-        val random = Random(System.currentTimeMillis())
-        for (day in 0..4) {
-            val index = (random.nextInt() % original.size).absoluteValue
-            result += original[index]
-        }
-    }
-
-    fun processPickUpResult(): String {
-        val stringBuilder = StringBuilder()
-        for (day in 0..4) {
-            stringBuilder.append(dayOfTheWeek(day))
-            stringBuilder.append(":")
-            val item = result[day]
-            stringBuilder.append(item.name)
-            stringBuilder.append("\n")
-        }
-        return stringBuilder.toString()
-    }
-
-    private fun dayOfTheWeek(day: Int): String {
-        return when (day) {
-            0 -> "星期一"
-            1 -> "星期二"
-            2 -> "星期三"
-            3 -> "星期四"
-            4 -> "星期五"
-            5 -> "星期六"
-            6 -> "星期日"
-            else -> ""
-        }
     }
 }
