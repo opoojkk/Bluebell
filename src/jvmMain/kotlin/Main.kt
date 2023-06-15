@@ -29,7 +29,7 @@ import java.io.File
 @Preview
 fun App() {
     var randomResult by remember { mutableStateOf("") }
-    var duplicateAllowed by remember { mutableStateOf(false) }
+    var duplicateAllowed by remember { mutableStateOf(Config.duplicateEnabled) }
     var selectedFile by remember { mutableStateOf<File?>(null) }
 
     var state by remember { mutableStateOf(StateConstant.Normal) }
@@ -79,6 +79,7 @@ fun App() {
                     checked = duplicateAllowed,
                     onCheckedChange = {
                         duplicateAllowed = it
+                        Config.duplicateEnabled = it
                     }, colors = CheckboxDefaults.colors(
                         checkedColor = MaterialTheme.colors.primary,
                         uncheckedColor = MaterialTheme.colors.primary
@@ -97,12 +98,15 @@ fun App() {
                     return@Button
                 }
                 try {
-                    readFileParseResult(selectedFile!!, callback = {
-                        if (it.originalSize() < 5 && !duplicateAllowed) {
-                            throw IllegalArgumentException()
-                        }
-                        randomResult = it.processPickUpResult()
-                    })
+                    readFileParseResult(selectedFile!!,
+                        onStart = {
+                            if (it.originalSize() < 5 && !duplicateAllowed) {
+                                throw IllegalArgumentException()
+                            }
+                        },
+                        onFinish = {
+                            randomResult = it.processPickUpResult()
+                        })
                 } catch (illegalArgumentException: IllegalArgumentException) {
                     state = StateConstant.NotEnoughOptions
                 }
@@ -117,7 +121,7 @@ fun App() {
     }
 }
 
-private fun readFileParseResult(file: File, callback: (PickUpBean) -> Unit) {
+private fun readFileParseResult(file: File, onStart: (PickUpBean) -> Unit, onFinish: (PickUpBean) -> Unit = {}) {
     val pickUpBean = PickUpBean()
     EasyExcel.read(file.path, Item::class.java, object : ReadListener<Item> {
         override fun invoke(data: Item?, context: AnalysisContext?) {
@@ -128,8 +132,9 @@ private fun readFileParseResult(file: File, callback: (PickUpBean) -> Unit) {
 
         override fun doAfterAllAnalysed(context: AnalysisContext?) {
             println("done")
+            onStart(pickUpBean)
             pickUpBean.create()
-            callback(pickUpBean)
+            onFinish(pickUpBean)
         }
     }).doReadAll()
 }
