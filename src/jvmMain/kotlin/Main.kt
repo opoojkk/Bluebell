@@ -1,3 +1,4 @@
+import androidx.compose.animation.core.*
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
@@ -20,6 +21,7 @@ import com.alibaba.excel.EasyExcel
 import com.alibaba.excel.context.AnalysisContext
 import com.alibaba.excel.read.listener.ReadListener
 import exception.IllegalFileFormatException
+import kotlinx.coroutines.*
 import java.awt.FileDialog
 import java.io.File
 
@@ -89,31 +91,38 @@ fun App() {
                     duplicateAllowed = !duplicateAllowed
                 })
             }
-            if (randomResult.isNotEmpty()) {
-                Text(text = randomResult, softWrap = true)
-            }
+
+            var loading by remember { mutableStateOf(false) }
             Button(modifier = Modifier.fillMaxWidth(), onClick = {
                 selectedFile ?: let {
                     state = StateConstant.NoFileSelected
                     return@Button
                 }
-                try {
-                    readFileParseResult(selectedFile!!,
-                        onStart = {
-                            if (it.originalSize() < 5 && !duplicateAllowed) {
-                                throw IllegalArgumentException()
-                            }
-                        },
-                        onFinish = {
-                            randomResult = it.processPickUpResult()
-                        })
-                } catch (illegalArgumentException: IllegalArgumentException) {
-                    state = StateConstant.NotEnoughOptions
-                }
-
+                loading = true
+                Thread {
+                    try {
+                        readFileParseResult(selectedFile!!,
+                            onStart = {
+                                if (it.originalSize() < 5 && !duplicateAllowed) {
+                                    throw IllegalArgumentException()
+                                }
+                            },
+                            onFinish = {
+                                randomResult = it.processPickUpResult()
+                                loading = false
+                            })
+                    } catch (illegalArgumentException: IllegalArgumentException) {
+                        state = StateConstant.NotEnoughOptions
+                        loading = false
+                    }
+                }.start()
             }) {
                 Text("生成")
             }
+            if (randomResult.isNotEmpty()) {
+                Text(text = randomResult, softWrap = true, modifier = Modifier.padding(top = 8.dp))
+            }
+            loading(loading && randomResult.isEmpty())
             alertAlertDialog(
                 state = state,
                 onDismiss = { state = StateConstant.Normal })
@@ -185,9 +194,30 @@ private fun alertAlertDialog(
     )
 }
 
+@Composable
+fun loading(animate: Boolean) {
+    if (!animate) {
+        return
+    }
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        CircularProgressIndicator(
+            modifier = Modifier
+                .height(60.dp)
+                .width(60.dp)
+                .padding(top = 8.dp),
+            color = MaterialTheme.colors.primary,
+            strokeWidth = 5.dp
+        )
+    }
+
+}
+
 fun main() = application {
     Window(
-        state = WindowState(width = 400.dp, position = WindowPosition.Aligned(Alignment.Center)),
+        state = WindowState(width = 530.dp, height = 420.dp, position = WindowPosition.Aligned(Alignment.Center)),
         title = "随机抽取",
         onCloseRequest = ::exitApplication
     ) {
