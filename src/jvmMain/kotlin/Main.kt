@@ -1,6 +1,5 @@
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.onClick
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -9,16 +8,16 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeWindow
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.*
+import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.WindowPosition
+import androidx.compose.ui.window.WindowState
+import androidx.compose.ui.window.application
 import com.alibaba.excel.EasyExcel
 import com.alibaba.excel.context.AnalysisContext
 import com.alibaba.excel.read.listener.ReadListener
 import kotlinx.coroutines.DelicateCoroutinesApi
-import java.awt.Dialog
 import java.awt.FileDialog
 import java.io.File
 import kotlin.math.absoluteValue
@@ -41,7 +40,7 @@ fun App() {
                 TextField(
                     readOnly = true,
                     modifier = Modifier.weight(1F).wrapContentHeight(),
-                    placeholder = { Text("input file path") },
+                    placeholder = { Text("选择文件后显示路径") },
                     value = selectedFile?.path ?: "",
                     onValueChange = { },
                     shape = RoundedCornerShape(10f),
@@ -69,11 +68,12 @@ fun App() {
                         }
                         selectedFile = file
                     }) {
-                    Text("select file")
+                    Text("选择文件")
                 }
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Checkbox(
+                    modifier = Modifier.padding(start = 8.dp),
                     checked = duplicateAllowed,
                     onCheckedChange = {
                         duplicateAllowed = it
@@ -86,7 +86,9 @@ fun App() {
                     duplicateAllowed = !duplicateAllowed
                 })
             }
-            Text(text = randomResult, softWrap = true)
+            if (randomResult.isNotEmpty()) {
+                Text(text = randomResult, softWrap = true)
+            }
             Button(modifier = Modifier.fillMaxWidth(), onClick = {
                 selectedFile ?: let {
                     selectFileDialogEnabled = true
