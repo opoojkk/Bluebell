@@ -54,6 +54,9 @@ fun App() {
                     onClick = {
                         val file = try {
                             selectFile()
+                        } catch (e: NoSuchFileException) {
+                            state = StateConstant.NoFileSelected
+                            return@Button
                         } catch (e: IllegalArgumentException) {
                             state = StateConstant.CantFindFile
                             return@Button
@@ -135,10 +138,12 @@ private fun selectFile(): File {
     val fileDialog = FileDialog(ComposeWindow())
     fileDialog.isVisible = true
     val path = "${fileDialog.directory}${fileDialog.file}"
-    println("path: $path")
     val file = File(path)
-    if (!file.exists() || !file.isFile) {
-        throw IllegalArgumentException("cant find file")
+    if (!file.exists()) {
+        throw NoSuchFileException(file)
+    }
+    if (!file.isFile) {
+        throw IllegalArgumentException("not a file")
     }
     if (!file.path.contains(".xlsx")) {
         throw IllegalFileFormatException("error file format")
@@ -156,28 +161,6 @@ private fun alertAlertDialog(
         return
     }
 
-    val textContent = when (state) {
-        StateConstant.NotEnoughOptions -> {
-            "小笨蛋，选项不够还不让重复，\n怎么生成呢?"
-        }
-
-        StateConstant.NoFileSelected -> {
-            "小笨蛋，先选一个文件"
-        }
-
-        StateConstant.CantFindFile -> {
-            "小笨蛋，刚选的路径找不到文件了"
-        }
-
-        StateConstant.WrongFileFormat -> {
-            "小笨蛋，得是Excel的格式"
-        }
-
-        else -> {
-            ""
-        }
-
-    }
     AlertDialog(
         onDismissRequest = { onDismiss() },
         modifier = Modifier
@@ -186,7 +169,7 @@ private fun alertAlertDialog(
             .wrapContentHeight(),
         title = null,
         text = {
-            Text(text = textContent)
+            Text(text = state.content)
         },
 
         confirmButton = {
