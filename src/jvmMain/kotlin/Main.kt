@@ -1,4 +1,3 @@
-import androidx.compose.animation.core.*
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
@@ -10,6 +9,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPosition
@@ -21,7 +22,6 @@ import com.alibaba.excel.EasyExcel
 import com.alibaba.excel.context.AnalysisContext
 import com.alibaba.excel.read.listener.ReadListener
 import exception.IllegalFileFormatException
-import kotlinx.coroutines.*
 import java.awt.FileDialog
 import java.io.File
 
@@ -31,6 +31,7 @@ import java.io.File
 @Preview
 fun App() {
     var randomResult by remember { mutableStateOf("") }
+    var pureRandomResult by remember { mutableStateOf("") }
     var duplicateAllowed by remember { mutableStateOf(Config.duplicateEnabled) }
     var selectedFile by remember { mutableStateOf<File?>(null) }
 
@@ -108,7 +109,8 @@ fun App() {
                                 }
                             },
                             onFinish = {
-                                randomResult = it.processPickUpResult()
+                                randomResult = it.pickUpResult()
+                                pureRandomResult = it.pickUpPureResult()
                                 loading = false
                             })
                     } catch (illegalArgumentException: IllegalArgumentException) {
@@ -120,7 +122,25 @@ fun App() {
                 Text("生成")
             }
             if (randomResult.isNotEmpty()) {
+                var copyText by remember { mutableStateOf("") }
                 Text(text = randomResult, softWrap = true, modifier = Modifier.padding(top = 8.dp))
+                Row {
+                    Button(modifier = Modifier.weight(1f), onClick = {
+                        copyText = randomResult
+                    }) {
+                        Text("复制全部")
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(modifier = Modifier.weight(1f), onClick = {
+                        copyText = pureRandomResult
+                    }) {
+                        Text("只复制内容（不包含周几）")
+                    }
+                    if (copyText.isNotEmpty()) {
+                        copyToClipBroad(copyText)
+                        copyText = ""
+                    }
+                }
             }
             loading(loading && randomResult.isEmpty())
             alertAlertDialog(
@@ -128,6 +148,11 @@ fun App() {
                 onDismiss = { state = StateConstant.Normal })
         }
     }
+}
+
+@Composable
+private fun copyToClipBroad(randomResult: String) {
+    LocalClipboardManager.current.setText(AnnotatedString(randomResult))
 }
 
 private fun readFileParseResult(file: File, onStart: (PickUpBean) -> Unit, onFinish: (PickUpBean) -> Unit = {}) {

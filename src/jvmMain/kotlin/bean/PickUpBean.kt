@@ -26,7 +26,7 @@ class PickUpBean {
         return original.size
     }
 
-    fun processPickUpResult(): String {
+    fun pickUpResult(): String {
         val stringBuilder = StringBuilder()
         for (day in Config.dayOfWeekEnabledList()) {
 
@@ -36,6 +36,10 @@ class PickUpBean {
             stringBuilder.append("\n")
         }
         return stringBuilder.toString()
+    }
+
+    fun pickUpPureResult(): String {
+        return result.toString()
     }
 }
 
