@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.example"
-version = "1.0-SNAPSHOT"
+version = "1.0"
 
 repositories {
     google()
@@ -37,9 +37,12 @@ compose.desktop {
     application {
         mainClass = "MainKt"
         nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "PickUp"
+            targetFormats(TargetFormat.Exe)
+            packageName = "biu"
             packageVersion = "1.0.0"
+            windows {
+                iconFile.set(File("./heibao.ico"))
+            }
         }
     }
 }
