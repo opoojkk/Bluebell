@@ -61,7 +61,7 @@ fun App() {
                         val file = try {
                             selectFile()
                         } catch (e: NoSuchFileException) {
-                            state = StateConstant.NoFileSelected
+                            state = StateConstant.FilePathError
                             return@Button
                         } catch (e: IllegalArgumentException) {
                             state = StateConstant.CantFindFile
@@ -334,7 +334,7 @@ private fun ReadFileButton(
 ) {
     Button(modifier = modifier, onClick = {
         if (selectedFile == null) {
-            stateChange(StateConstant.NoFileSelected)
+            stateChange(StateConstant.DeselectFile)
             return@Button
         }
         Thread {

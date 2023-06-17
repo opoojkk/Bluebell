@@ -1,9 +1,10 @@
 enum class StateConstant {
     Normal,
-    NotEnoughOptions("小笨蛋，选项不够还不让重复，\n怎么生成呢?"),
-    NoFileSelected("小笨蛋，先选一个文件"),
+    NotEnoughOptions("选项不够还不让重复，\n怎么生成呢?"),
+    FilePathError("文件路径有问题还是没有选文件"),
     CantFindFile("小笨蛋，刚选的刚选的可不是一个文件"),
-    WrongFileFormat("小笨蛋，得是Excel的格式");
+    DeselectFile("没有选择文件呀"),
+    WrongFileFormat("小笨蛋，Excel格式的文件");
 
 
     val content: String
