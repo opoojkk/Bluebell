@@ -53,7 +53,7 @@ fun App(window: ComposeWindow) {
                 TextField(
                     readOnly = true,
                     modifier = Modifier.weight(1F).wrapContentHeight(),
-                    placeholder = { Text("选择文件后显示路径") },
+                    placeholder = { Text("选择文件后显示路径（支持拖动文件）") },
                     value = selectedFile?.path ?: "",
                     onValueChange = { },
                     shape = RoundedCornerShape(10f),
@@ -65,7 +65,7 @@ fun App(window: ComposeWindow) {
                 Button(
                     modifier = Modifier.padding(start = 8.dp),
                     onClick = {
-                        val file = try {
+                        selectedFile = try {
                             selectFile()
                         } catch (e: NoSuchFileException) {
                             state = StateConstant.FilePathError
@@ -77,7 +77,6 @@ fun App(window: ComposeWindow) {
                             state = StateConstant.WrongFileFormat
                             return@Button
                         }
-                        selectedFile = file
                     }
                 ) {
                     Text("选择文件⓵")
@@ -86,8 +85,20 @@ fun App(window: ComposeWindow) {
                     state = state,
                     onDismiss = { state = StateConstant.Normal })
             }
+
             dragFile(window, onDrop = {
-                selectedFile = it
+                selectedFile = try {
+                    preProcessFile(it)
+                } catch (e: NoSuchFileException) {
+                    state = StateConstant.FilePathError
+                    return@dragFile
+                } catch (e: IllegalArgumentException) {
+                    state = StateConstant.CantFindFile
+                    return@dragFile
+                } catch (e: IllegalFileFormatException) {
+                    state = StateConstant.WrongFileFormat
+                    return@dragFile
+                }
             })
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Checkbox(
@@ -128,27 +139,7 @@ fun App(window: ComposeWindow) {
                 Text("生成⓸")
             }
             Loading(loading)
-            if (randomResult.isNotEmpty()) {
-                var copyText by remember { mutableStateOf("") }
-                Text(text = randomResult, softWrap = true, modifier = Modifier.padding(top = 8.dp))
-                Row {
-                    Button(modifier = Modifier.weight(1f), onClick = {
-                        copyText = randomResult
-                    }) {
-                        Text("复制全部")
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Button(modifier = Modifier.weight(1f), onClick = {
-                        copyText = pureRandomResult
-                    }) {
-                        Text("只复制内容（不包含周几）")
-                    }
-                    if (copyText.isNotEmpty()) {
-                        copyToClipBroad(copyText)
-                        copyText = ""
-                    }
-                }
-            }
+            RandomResult(randomResult, pureRandomResult)
             alertAlertDialog(
                 state = state,
                 onDismiss = { state = StateConstant.Normal })
@@ -188,6 +179,10 @@ private fun selectFile(): File {
     fileDialog.isVisible = true
     val path = "${fileDialog.directory}${fileDialog.file}"
     val file = File(path)
+    return preProcessFile(file)
+}
+
+private fun preProcessFile(file: File): File {
     if (!file.exists()) {
         throw NoSuchFileException(file)
     }
@@ -250,7 +245,6 @@ fun Loading(animate: Boolean) {
 
 }
 
-@OptIn(ExperimentalMaterialApi::class)
 @Preview
 @Composable
 fun DayOfWeekLazyColumn() {
@@ -391,4 +385,30 @@ private fun dragFile(window: ComposeWindow, onDrop: (File) -> Unit) {
         }
     }
     window.contentPane.dropTarget = target
+}
+
+@Preview
+@Composable
+private fun RandomResult(randomResult: String, pureRandomResult: String) {
+    if (randomResult.isNotEmpty()) {
+        var copyText by remember { mutableStateOf("") }
+        Text(text = randomResult, softWrap = true, modifier = Modifier.padding(top = 8.dp))
+        Row {
+            Button(modifier = Modifier.weight(1f), onClick = {
+                copyText = randomResult
+            }) {
+                Text("复制全部")
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Button(modifier = Modifier.weight(1f), onClick = {
+                copyText = pureRandomResult
+            }) {
+                Text("只复制内容（不包含周几）")
+            }
+            if (copyText.isNotEmpty()) {
+                copyToClipBroad(copyText)
+                copyText = ""
+            }
+        }
+    }
 }
