@@ -11,7 +11,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.res.loadImageBitmap
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.useResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -291,7 +295,8 @@ fun main() = application {
     Window(
         state = WindowState(width = 530.dp, height = 440.dp, position = WindowPosition.Aligned(Alignment.Center)),
         title = "随机餐品",
-        onCloseRequest = ::exitApplication
+        onCloseRequest = ::exitApplication,
+        icon = BitmapPainter(useResource("heibao.png", ::loadImageBitmap))
     ) {
         App()
     }
@@ -307,6 +312,7 @@ private fun PreferencesButton(modifier: Modifier = Modifier) {
         Text("配置项（可选）⓷", textAlign = TextAlign.Center)
     }
     if (show.value) {
+
         Window(
             state = WindowState(
                 width = 420.dp,
@@ -315,7 +321,8 @@ private fun PreferencesButton(modifier: Modifier = Modifier) {
             ),
             title = "配置项",
             onCloseRequest = { show.value = false },
-            resizable = false
+            resizable = false,
+            icon = BitmapPainter(useResource("heibao.png", ::loadImageBitmap))
         ) {
             DayOfWeekLazyColumn()
         }
