@@ -11,10 +11,13 @@ class PickUpBean {
         original.add(item)
     }
 
-    fun create() {
+    fun generate() {
         val random = Random(System.currentTimeMillis())
         for (day in Config.dayOfWeekEnabledList()) {
-            val index = (random.nextInt() % original.size).absoluteValue
+            var index = (random.nextInt() % original.size).absoluteValue
+            while (index == 0) {
+                index = (random.nextInt() % original.size).absoluteValue
+            }
             result[day] = original[index].name
             if (!Config.duplicateEnabled) {
                 original.removeAt(index)
@@ -29,7 +32,6 @@ class PickUpBean {
     fun pickUpResult(): String {
         val stringBuilder = StringBuilder()
         for (day in Config.dayOfWeekEnabledList()) {
-
             stringBuilder.append(Config.dayOfWeekMap[day])
             stringBuilder.append(":")
             stringBuilder.append(result[day])

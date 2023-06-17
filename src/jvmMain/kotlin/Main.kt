@@ -1,6 +1,7 @@
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.onClick
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
@@ -11,11 +12,9 @@ import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Window
-import androidx.compose.ui.window.WindowPosition
-import androidx.compose.ui.window.WindowState
-import androidx.compose.ui.window.application
+import androidx.compose.ui.window.*
 import bean.Item
 import bean.PickUpBean
 import com.alibaba.excel.EasyExcel
@@ -26,7 +25,7 @@ import java.awt.FileDialog
 import java.io.File
 
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
 @Composable
 @Preview
 fun App() {
@@ -92,35 +91,29 @@ fun App() {
                     duplicateAllowed = !duplicateAllowed
                 })
             }
-
             var loading by remember { mutableStateOf(false) }
-            Button(modifier = Modifier.fillMaxWidth(), onClick = {
-                selectedFile ?: let {
-                    state = StateConstant.NoFileSelected
-                    return@Button
-                }
-                loading = true
-                Thread {
-                    try {
-                        readFileParseResult(selectedFile!!,
-                            onStart = {
-                                if (it.originalSize() < 5 && !duplicateAllowed) {
-                                    throw IllegalArgumentException()
-                                }
-                            },
-                            onFinish = {
-                                randomResult = it.pickUpResult()
-                                pureRandomResult = it.pickUpPureResult()
-                                loading = false
-                            })
-                    } catch (illegalArgumentException: IllegalArgumentException) {
-                        state = StateConstant.NotEnoughOptions
+            var pickUpBean by remember { mutableStateOf(PickUpBean()) }
+            Row {
+                ReadFileButton(
+                    modifier = Modifier.weight(1f),
+                    selectedFile = selectedFile,
+                    stateChange = { state = it },
+                    onStart = { loading = true },
+                    onFinish = {
+                        pickUpBean = it
                         loading = false
-                    }
-                }.start()
-            }) {
+                    })
+                Spacer(modifier = Modifier.width(8.dp))
+                PreferencesButton(modifier = Modifier.weight(1f))
+            }
+            Button(onClick = {
+                pickUpBean.generate()
+                randomResult = pickUpBean.pickUpResult()
+                pureRandomResult = pickUpBean.pickUpPureResult()
+            }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
                 Text("生成")
             }
+            Loading(loading)
             if (randomResult.isNotEmpty()) {
                 var copyText by remember { mutableStateOf("") }
                 Text(text = randomResult, softWrap = true, modifier = Modifier.padding(top = 8.dp))
@@ -142,7 +135,6 @@ fun App() {
                     }
                 }
             }
-            loading(loading && randomResult.isEmpty())
             alertAlertDialog(
                 state = state,
                 onDismiss = { state = StateConstant.Normal })
@@ -155,8 +147,14 @@ private fun copyToClipBroad(randomResult: String) {
     LocalClipboardManager.current.setText(AnnotatedString(randomResult))
 }
 
-private fun readFileParseResult(file: File, onStart: (PickUpBean) -> Unit, onFinish: (PickUpBean) -> Unit = {}) {
+private fun readFileParseResult(
+    file: File,
+    onStart: () -> Unit,
+    onReaded: (PickUpBean) -> Unit,
+    onFinish: (PickUpBean) -> Unit
+) {
     val pickUpBean = PickUpBean()
+    onStart()
     EasyExcel.read(file.path, Item::class.java, object : ReadListener<Item> {
         override fun invoke(data: Item?, context: AnalysisContext?) {
             println("$data")
@@ -165,9 +163,7 @@ private fun readFileParseResult(file: File, onStart: (PickUpBean) -> Unit, onFin
         }
 
         override fun doAfterAllAnalysed(context: AnalysisContext?) {
-            println("done")
-            onStart(pickUpBean)
-            pickUpBean.create()
+            onReaded(pickUpBean)
             onFinish(pickUpBean)
         }
     }).doReadAll()
@@ -220,7 +216,7 @@ private fun alertAlertDialog(
 }
 
 @Composable
-fun loading(animate: Boolean) {
+fun Loading(animate: Boolean) {
     if (!animate) {
         return
     }
@@ -240,12 +236,95 @@ fun loading(animate: Boolean) {
 
 }
 
+@Preview
+@Composable
+fun DayOfWeekLazyColumn() {
+    LazyColumn {
+        items(Config.dayOfWeekMap.size) { index ->
+            val enabled = remember { mutableStateOf(Config.dayOfWeekEnabledMap[index]!!) }
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(0.dp)) {
+                Checkbox(
+                    colors = CheckboxDefaults.colors(
+                        checkedColor = MaterialTheme.colors.primary,
+                        uncheckedColor = MaterialTheme.colors.primary
+                    ),
+                    checked = enabled.value,
+                    onCheckedChange = {
+                        enabled.value = it
+                        Config.dayOfWeekEnabledMap[index] = it
+                    })
+                Text(text = Config.dayOfWeekMap[index]!!)
+            }
+        }
+    }
+}
+
 fun main() = application {
     Window(
-        state = WindowState(width = 530.dp, height = 420.dp, position = WindowPosition.Aligned(Alignment.Center)),
-        title = "随机抽取",
+        state = WindowState(width = 530.dp, height = 650.dp, position = WindowPosition.Aligned(Alignment.Center)),
+        title = "随机餐品",
         onCloseRequest = ::exitApplication
     ) {
         App()
+    }
+}
+
+@Preview
+@Composable
+private fun PreferencesButton(modifier: Modifier = Modifier) {
+    val show = remember { mutableStateOf(false) }
+    Button(modifier = modifier, onClick = {
+        show.value = true
+    }) {
+        Text("配置项", textAlign = TextAlign.Center)
+    }
+    if (show.value) {
+        Window(
+            state = WindowState(
+                width = 420.dp,
+                height = 350.dp,
+                position = WindowPosition.Aligned(Alignment.Center)
+            ),
+            title = "属性",
+            onCloseRequest = { show.value = false }
+        ) {
+            DayOfWeekLazyColumn()
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun ReadFileButton(
+    modifier: Modifier = Modifier,
+    selectedFile: File?,
+    duplicateAllowed: Boolean = false,
+    stateChange: (StateConstant) -> Unit,
+    onStart: () -> Unit,
+    onFinish: (PickUpBean) -> Unit
+) {
+    Button(modifier = modifier, onClick = {
+        if (selectedFile == null) {
+            stateChange(StateConstant.NoFileSelected)
+            return@Button
+        }
+        Thread {
+            try {
+                readFileParseResult(
+                    selectedFile,
+                    onStart = onStart,
+                    onReaded = {
+                        if (it.originalSize() < 5 && !duplicateAllowed) {
+                            throw IllegalArgumentException()
+                        }
+                    },
+                    onFinish = onFinish
+                )
+            } catch (illegalArgumentException: IllegalArgumentException) {
+                stateChange(StateConstant.NotEnoughOptions)
+            }
+        }.start()
+    }) {
+        Text("解析", textAlign = TextAlign.Center)
     }
 }

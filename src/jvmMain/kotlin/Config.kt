@@ -11,7 +11,7 @@ object Config {
     )
 
     // 默认是从周一到周五
-    val dayOfWeekEnabledMap = mapOf(
+    val dayOfWeekEnabledMap = mutableMapOf(
         0 to true,
         1 to true,
         2 to true,
