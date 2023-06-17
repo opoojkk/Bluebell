@@ -42,6 +42,7 @@ compose.desktop {
             packageVersion = "1.0.0"
             windows {
                 iconFile.set(File("./heibao.ico"))
+                shortcut = true
             }
         }
     }
