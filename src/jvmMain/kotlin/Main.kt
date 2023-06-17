@@ -14,7 +14,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.loadImageBitmap
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.useResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
@@ -30,13 +29,17 @@ import com.alibaba.excel.context.AnalysisContext
 import com.alibaba.excel.read.listener.ReadListener
 import exception.IllegalFileFormatException
 import java.awt.FileDialog
+import java.awt.datatransfer.DataFlavor
+import java.awt.dnd.DnDConstants
+import java.awt.dnd.DropTarget
+import java.awt.dnd.DropTargetDropEvent
 import java.io.File
 
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 @Preview
-fun App() {
+fun App(window: ComposeWindow) {
     var randomResult by remember { mutableStateOf("") }
     var pureRandomResult by remember { mutableStateOf("") }
     var duplicateAllowed by remember { mutableStateOf(Config.duplicateEnabled) }
@@ -83,6 +86,9 @@ fun App() {
                     state = state,
                     onDismiss = { state = StateConstant.Normal })
             }
+            dragFile(window, onDrop = {
+                selectedFile = it
+            })
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Checkbox(
                     modifier = Modifier.padding(start = 8.dp),
@@ -298,7 +304,7 @@ fun main() = application {
         onCloseRequest = ::exitApplication,
         icon = BitmapPainter(useResource("heibao.png", ::loadImageBitmap))
     ) {
-        App()
+        App(window)
     }
 }
 
@@ -363,4 +369,26 @@ private fun ReadFileButton(
     }) {
         Text("解析⓶", textAlign = TextAlign.Center)
     }
+}
+
+private fun dragFile(window: ComposeWindow, onDrop: (File) -> Unit) {
+    val target = object : DropTarget() {
+        @Synchronized
+        override fun drop(evt: DropTargetDropEvent) {
+            try {
+                evt.acceptDrop(DnDConstants.ACTION_REFERENCE)
+                val droppedFiles = evt
+                    .transferable.getTransferData(
+                        DataFlavor.javaFileListFlavor
+                    ) as List<*>
+                for (file in droppedFiles) {
+                    onDrop(file as File)
+                    return
+                }
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+            }
+        }
+    }
+    window.contentPane.dropTarget = target
 }
