@@ -21,6 +21,16 @@ object Config {
         6 to false
     )
 
+    val selectedFoods = mutableMapOf(
+        0 to "",
+        1 to "",
+        2 to "",
+        3 to "",
+        4 to "",
+        5 to "",
+        6 to ""
+    )
+
     fun dayOfWeekEnabledList(): List<Int> {
         val result = ArrayList<Int>()
         for (day in dayOfWeekEnabledMap) {

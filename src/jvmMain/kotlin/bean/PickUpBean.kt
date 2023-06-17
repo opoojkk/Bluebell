@@ -12,15 +12,20 @@ class PickUpBean {
     }
 
     fun generate() {
+        val originalCopy = ArrayList<Item>(original)
         val random = Random(System.currentTimeMillis())
         for (day in Config.dayOfWeekEnabledList()) {
-            var index = (random.nextInt() % original.size).absoluteValue
-            while (index == 0) {
-                index = (random.nextInt() % original.size).absoluteValue
+            if (Config.selectedFoods[day] != "") {
+                result[day] = Config.selectedFoods[day]!!
+                continue
             }
-            result[day] = original[index].name
+            var index = (random.nextInt() % originalCopy.size).absoluteValue
+            while (index == 0) {
+                index = (random.nextInt() % originalCopy.size).absoluteValue
+            }
+            result[day] = originalCopy[index].name
             if (!Config.duplicateEnabled) {
-                original.removeAt(index)
+                originalCopy.removeAt(index)
             }
         }
     }
@@ -45,7 +50,7 @@ class PickUpBean {
     }
 }
 
-class Item() {
+class Item {
     var name: String = ""
     override fun toString(): String {
         return "Item(name='$name')"

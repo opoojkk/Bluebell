@@ -9,6 +9,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeWindow
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
@@ -72,7 +73,7 @@ fun App() {
                         selectedFile = file
                     }
                 ) {
-                    Text("选择文件")
+                    Text("选择文件⓵")
                 }
                 alertAlertDialog(
                     state = state,
@@ -114,7 +115,7 @@ fun App() {
                 randomResult = pickUpBean.pickUpResult()
                 pureRandomResult = pickUpBean.pickUpPureResult()
             }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
-                Text("生成")
+                Text("生成⓸")
             }
             Loading(loading)
             if (randomResult.isNotEmpty()) {
@@ -239,32 +240,56 @@ fun Loading(animate: Boolean) {
 
 }
 
+@OptIn(ExperimentalMaterialApi::class)
 @Preview
 @Composable
 fun DayOfWeekLazyColumn() {
     LazyColumn {
         items(Config.dayOfWeekMap.size) { index ->
-            val enabled = remember { mutableStateOf(Config.dayOfWeekEnabledMap[index]!!) }
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(0.dp)) {
-                Checkbox(
-                    colors = CheckboxDefaults.colors(
-                        checkedColor = MaterialTheme.colors.primary,
-                        uncheckedColor = MaterialTheme.colors.primary
-                    ),
-                    checked = enabled.value,
-                    onCheckedChange = {
-                        enabled.value = it
-                        Config.dayOfWeekEnabledMap[index] = it
-                    })
-                Text(text = Config.dayOfWeekMap[index]!!)
-            }
+            CustomPreferences(index)
         }
+    }
+}
+
+@Composable
+private fun CustomPreferences(index: Int) {
+    val enabled = remember { mutableStateOf(Config.dayOfWeekEnabledMap[index]!!) }
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Checkbox(
+            colors = CheckboxDefaults.colors(
+                checkedColor = MaterialTheme.colors.primary,
+                uncheckedColor = MaterialTheme.colors.primary
+            ),
+            checked = enabled.value,
+            onCheckedChange = {
+                enabled.value = it
+                Config.dayOfWeekEnabledMap[index] = it
+            })
+        Text(text = Config.dayOfWeekMap[index]!!)
+        val food = remember { mutableStateOf(Config.selectedFoods[index]) }
+        Spacer(modifier = Modifier.width(8.dp))
+        TextField(
+            enabled = enabled.value,
+            value = food.value!!,
+            onValueChange = {
+                food.value = it
+                Config.selectedFoods[index] = it
+            },
+            modifier = Modifier.scale(scaleY = 0.8F, scaleX = 0.8F).weight(1f),
+            singleLine = true,
+            placeholder = {
+                Text(
+                    text = "固定餐品名称（不再随机）",
+                    color = if (enabled.value) Color(0xFF666666) else Color(0xFF999999)
+                )
+            }
+        )
     }
 }
 
 fun main() = application {
     Window(
-        state = WindowState(width = 530.dp, height = 650.dp, position = WindowPosition.Aligned(Alignment.Center)),
+        state = WindowState(width = 530.dp, height = 440.dp, position = WindowPosition.Aligned(Alignment.Center)),
         title = "随机餐品",
         onCloseRequest = ::exitApplication
     ) {
@@ -279,17 +304,18 @@ private fun PreferencesButton(modifier: Modifier = Modifier) {
     Button(modifier = modifier, onClick = {
         show.value = true
     }) {
-        Text("配置项", textAlign = TextAlign.Center)
+        Text("配置项（可选）⓷", textAlign = TextAlign.Center)
     }
     if (show.value) {
         Window(
             state = WindowState(
                 width = 420.dp,
-                height = 350.dp,
+                height = 440.dp,
                 position = WindowPosition.Aligned(Alignment.Center)
             ),
-            title = "属性",
-            onCloseRequest = { show.value = false }
+            title = "配置项",
+            onCloseRequest = { show.value = false },
+            resizable = false
         ) {
             DayOfWeekLazyColumn()
         }
@@ -328,6 +354,6 @@ private fun ReadFileButton(
             }
         }.start()
     }) {
-        Text("解析", textAlign = TextAlign.Center)
+        Text("解析⓶", textAlign = TextAlign.Center)
     }
 }
