@@ -15,7 +15,8 @@ jobs:
       output2: ${{ steps.step2.outputs.test }}
     steps:
       - id: step1
-        run: echo "test=hello" >> "$GITHUB_OUTPUT"
+         latest_tag="$(git describe --abbrev=0 --tags)"
+        run: echo "test=$latest_tag" >> "$GITHUB_OUTPUT"
       - id: step2
         run: echo "test=world" >> "$GITHUB_OUTPUT"
   job2:
