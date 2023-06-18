@@ -28,6 +28,3 @@ jobs:
       - env:
           OUTPUT1: ${{needs.build.outputs.output1}}
         run: echo "$OUTPUT1"
-      - name: Get Latest Commit Tag
-        id: print
-        run: echo "${{ OUTPUT1 }}"
