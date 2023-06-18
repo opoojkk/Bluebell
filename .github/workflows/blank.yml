@@ -27,10 +27,19 @@ jobs:
     - name: package with Gradle
       run: ./gradlew package
       
-    - name: GitHub Tag Name example
+    - name: Set env
+      run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+    - name: Remove 'v' Prefix
+      id: remove_prefix
       run: |
-         echo "Tag name from GITHUB_REF_NAME: $GITHUB_REF_NAME"
-         echo "Tag name from github.ref_name: ${{  github.ref_name }}"
+        tag_without_v=$(echo "${{ steps.latest_tag.outputs.tag }}" | sed 's/^v//')
+        echo "RELEASE_VERSION_PURE=${tag_without_v}" >> $GITHUB_ENV
+        echo "Tag without 'v': $tag_without_v"
+        echo "Tag without RELEASE_VERSION_PURE: $RELEASE_VERSION_PURE"
+    - name: Test
+      run: |
+        echo $RELEASE_VERSION
+        echo ${{ env.RELEASE_VERSION }}
       
 
     - name: Create Release
@@ -52,6 +61,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./app/build/outputs/apk/release/Bluebell-${{  github.ref_name }}.msi
-        asset_name: Bluebell-${{  github.ref_name }}.msi
+        asset_path: ./app/build/outputs/apk/release/Bluebell-${{  env.RELEASE_VERSION_PURE }}.msi
+        asset_name: Bluebell-${{  env.RELEASE_VERSION_PURE }}.msi
         asset_content_type: application/x-msi
