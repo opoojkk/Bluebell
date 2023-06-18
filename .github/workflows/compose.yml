@@ -27,12 +27,6 @@ jobs:
     - name: package with Gradle
       run: ./gradlew package
       
-    - name: Find MSI File
-      id: find-msi
-      run: |
-        export MSI_FILE=$(find . -type f -name "*.msi")
-        echo "MSI_FILE_PATH=$MSI_FILE" >> $GITHUB_ENV
-      
     - name: Set env RELEASE_VERSION
       run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
     - name: Set env RELEASE_VERSION_NUMBER
@@ -46,8 +40,6 @@ jobs:
         echo ${{ env.RELEASE_VERSION }}
         echo $RELEASE_VERSION_NUMBER
         echo ${{ env.RELEASE_VERSION_NUMBER }}
-        echo $MSI_FILE_PATH
-        echo ${{ env.MSI_FILE_PATH }}
       
 
     - name: Create Release
@@ -69,6 +61,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ${{ env.MSI_FILE_PATH }}
+        asset_path: build/compose/binaries/main/msi/Bluebell-${{ env.RELEASE_VERSION_NUMBER }}.msi
         asset_name: Bluebell-${{  env.RELEASE_VERSION }}.msi
         asset_content_type: application/x-msi
