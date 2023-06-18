@@ -32,7 +32,7 @@ jobs:
     - name: Remove 'v' Prefix
       id: remove_prefix
       run: |
-        tag_without_v=$(echo "${{ steps.latest_tag.outputs.tag }}" | sed 's/^v//')
+        tag_without_v=$(echo "${{ env.RELEASE_VERSION }}}" | sed 's/^v//')
         echo "RELEASE_VERSION_PURE=${tag_without_v}" >> $GITHUB_ENV
         echo "Tag without 'v': $tag_without_v"
         echo "Tag without RELEASE_VERSION_PURE: $RELEASE_VERSION_PURE"
