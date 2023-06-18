@@ -30,7 +30,9 @@ jobs:
 
     - name: Get Latest Commit Tag
       id: latest_tag
-      run: echo "{tag}={$(git describe --abbrev=0 --tags)}" >> $tag
+      run: |
+        latest_tag="$(git describe --abbrev=0 --tags)"
+        echo "{tag}={$latest_tag}" >> $tag
 
     - name: Create Release
       id: create_release
