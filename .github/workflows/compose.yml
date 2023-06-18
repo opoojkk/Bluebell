@@ -31,7 +31,7 @@ jobs:
       id: find-msi
       run: |
         export MSI_FILE=$(find . -type f -name "*.msi")
-        echo "MSI_FILE_PATH=MSI_FILE" >> $GITHUB_ENV
+        echo "MSI_FILE_PATH=$MSI_FILE" >> $GITHUB_ENV
       
     - name: Set env RELEASE_VERSION
       run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
