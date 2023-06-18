@@ -1,4 +1,4 @@
-name: Android CI
+name: Jetpack Compose Desktop CI
 
 on:
   push:
@@ -33,4 +33,4 @@ jobs:
        draft: false
        prerelease: false
       env:
-       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+       GITHUB_TOKEN: ${{ secrets.TOKEN }}
