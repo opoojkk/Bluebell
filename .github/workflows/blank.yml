@@ -19,7 +19,7 @@ jobs:
       id: latest_tag
       run: |
         latest_tag="$(git describe --abbrev=0 --tags)"
-        echo "tag={$latest_tag}" >> "$GITHUB_OUTPUT"
+        echo "tag=$latest_tag" >> "$GITHUB_OUTPUT"
 
   job2:
       runs-on: ubuntu-latest
