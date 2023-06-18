@@ -16,6 +16,7 @@ jobs:
     steps:
       - id: step1
         run: |
+          git fetch --tags
           latest_tag=$(git describe --abbrev=0 --tags)
           echo "test=$latest_tag" >> "$GITHUB_OUTPUT"
       - id: step2
