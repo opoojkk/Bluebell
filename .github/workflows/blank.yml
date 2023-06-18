@@ -62,5 +62,5 @@ jobs:
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./app/build/outputs/apk/release/Bluebell-${{  env.RELEASE_VERSION_PURE }}.msi
-        asset_name: Bluebell-${{  env.RELEASE_VERSION_PURE }}.msi
+        asset_name: Bluebell-${{  env.RELEASE_VERSION }}.msi
         asset_content_type: application/x-msi
