@@ -25,17 +25,30 @@ jobs:
       run: ./gradlew build
     - name: package with Gradle
       run: ./gradlew package
-    - name: Get Lastest Comit Tag
-      id: get_tag
-      run: |
-          latest_tag=$(git describe --tags --abbrev=0)
-          echo "::set-output name=tag::$latest_tag"
-    - name: Release
+
+    - name: Get Latest Commit Tag
+      id: latest_tag
+      run: echo ::set-output name=tag::$(git describe --abbrev=0 --tags)
+
+    - name: Create Release
       id: create_release
       uses: actions/create-release@v1
-      with:
-       release_name: Release v.${{ steps.get_tag.outputs.tag }}
-       draft: false
-       prerelease: false
       env:
-       GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.TOKEN }}
+      with:
+        tag_name: ${{ steps.latest_tag.outputs.tag }}
+        release_name: Release ${{ steps.latest_tag.outputs.tag }}
+        body: |
+          This is the release for version ${{ steps.latest_tag.outputs.tag }}.
+        draft: false
+        prerelease: false
+
+    - name: Upload MSI
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./app/build/outputs/apk/release/Bluebell-${{ steps.latest_tag.outputs.tag }}.msi
+        asset_name: Bluebell-${{ steps.latest_tag.outputs.tag }}.msi
+        asset_content_type: application/x-msi
