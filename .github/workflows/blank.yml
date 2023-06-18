@@ -1,0 +1,26 @@
+name: Git Lastest tag
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      output1: ${{ steps.latest_tag.outputs.tag }}
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Get Latest Commit Tag
+      id: latest_tag
+      run: |
+        latest_tag="$(git describe --abbrev=0 --tags)"
+        echo "tag={$latest_tag}" >> "$GITHUB_OUTPUT"
+    - name: Get Latest Commit Tag
+      id: print
+      run: |
+        echo "${{ output1 }}"
