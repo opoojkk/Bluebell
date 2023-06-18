@@ -31,7 +31,7 @@ jobs:
       run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
     - name: Set env RELEASE_VERSION_NUMBER
       run: |
-        VERSION_NUMBER=$(echo $VERSION | sed -e 's/^v//')
+        VERSION_NUMBER=$(echo $RELEASE_VERSION | sed -e 's/^v//')
         echo "RELEASE_VERSION_NUMBER=${VERSION_NUMBER}" >> $GITHUB_ENV
 
     - name: Test
