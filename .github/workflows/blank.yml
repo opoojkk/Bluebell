@@ -2,9 +2,8 @@ name: Jetpack Compose Desktop CI
 
 on:
   push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+    tags:
+      - 'v*.*.*'
 
 jobs:
   build:
@@ -27,14 +26,13 @@ jobs:
       run: ./gradlew build
     - name: package with Gradle
       run: ./gradlew package
-
-    - name: Get Latest Commit Tag
-      uses: actions-ecosystem/action-get-latest-tag@v1
-      id: latest_tag
       
-    - name: output tag
-      id: output_tag
-      run: echo "${{ steps.latest_tag.outputs.level }}"
+    - name: Set tag env
+      run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+    - name: Test
+      run: |
+        echo $RELEASE_VERSION
+        echo ${{ env.RELEASE_VERSION }}
       
 
     - name: Create Release
