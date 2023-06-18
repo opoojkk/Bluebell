@@ -27,19 +27,19 @@ jobs:
     - name: package with Gradle
       run: ./gradlew package
       
-    - name: Set env
+    - name: Set env RELEASE_VERSION
       run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-    - name: Remove 'v' Prefix
-      id: remove_prefix
+    - name: Set env RELEASE_VERSION_NUMBER
       run: |
-        tag_without_v=$(echo "${{ env.RELEASE_VERSION }}}" | sed 's/^v//')
-        echo "RELEASE_VERSION_PURE=${tag_without_v}" >> $GITHUB_ENV
-        echo "Tag without 'v': $tag_without_v"
-        echo "Tag without RELEASE_VERSION_PURE: $RELEASE_VERSION_PURE"
+        VERSION_NUMBER=$(echo $VERSION | sed -e 's/^v//')
+        echo "RELEASE_VERSION_NUMBER=${VERSION_NUMBER}" >> $GITHUB_ENV
+
     - name: Test
       run: |
         echo $RELEASE_VERSION
         echo ${{ env.RELEASE_VERSION }}
+        echo $RELEASE_VERSION_NUMBER
+        echo ${{ env.RELEASE_VERSION_NUMBER }}
       
 
     - name: Create Release
@@ -61,6 +61,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./app/build/outputs/apk/release/Bluebell-${{  env.RELEASE_VERSION_PURE }}.msi
+        asset_path: ./app/build/outputs/apk/release/Bluebell-${{  env.RELEASE_VERSION_NUMBER }}.msi
         asset_name: Bluebell-${{  env.RELEASE_VERSION }}.msi
         asset_content_type: application/x-msi
