@@ -9,6 +9,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      output1: ${{ steps.latest_tag.outputs.tag }}
 
     steps:
     - uses: actions/checkout@v3
