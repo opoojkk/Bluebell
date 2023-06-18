@@ -28,7 +28,7 @@ jobs:
 
     - name: Get Latest Commit Tag
       id: latest_tag
-      run: echo ::set-output name=tag::$(git describe --abbrev=0 --tags)
+      run: "echo ::set-output name=tag::$(git describe --abbrev=0 --tags)"
 
     - name: Create Release
       id: create_release
