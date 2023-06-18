@@ -37,8 +37,8 @@ compose.desktop {
     application {
         mainClass = "MainKt"
         nativeDistributions {
-            targetFormats(TargetFormat.Exe)
-            packageName = "biu"
+            targetFormats(TargetFormat.Msi)
+            packageName = "Bluebell"
             packageVersion = "1.0.0"
             windows {
                 iconFile.set(File("./heibao.ico"))

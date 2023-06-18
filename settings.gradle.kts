@@ -12,5 +12,5 @@ pluginManagement {
     }
 }
 
-rootProject.name = "PickUp"
+rootProject.name = "Bluebell"
 

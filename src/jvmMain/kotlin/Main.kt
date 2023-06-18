@@ -294,7 +294,7 @@ private fun CustomPreferences(index: Int) {
 fun main() = application {
     Window(
         state = WindowState(width = 530.dp, height = 440.dp, position = WindowPosition.Aligned(Alignment.Center)),
-        title = "随机餐品",
+        title = "Bluebell",
         onCloseRequest = ::exitApplication,
         icon = BitmapPainter(useResource("heibao.png", ::loadImageBitmap))
     ) {
