@@ -29,10 +29,13 @@ jobs:
       run: ./gradlew package
 
     - name: Get Latest Commit Tag
+      uses: actions-ecosystem/action-get-latest-tag@v1
       id: latest_tag
-      run: |
-        latest_tag=$(git describe --abbrev=0 --tags)
-        echo "tag=$latest_tag" >> "$GITHUB_OUTPUT"
+      
+    - name: output tag
+      id: output_tag
+      run: echo "${{ steps.latest_tag.outputs.level }}"
+      
 
     - name: Create Release
       id: create_release
