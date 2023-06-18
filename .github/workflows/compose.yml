@@ -27,7 +27,7 @@ jobs:
     - name: package with Gradle
       run: |
         output=$(./gradlew package | grep -Po "The distribution is written to \K.*")
-        echo "FILE_PATH=$output" >> $GITHUB_ENV
+        echo "RELEASE_PATH=$output" >> $GITHUB_ENV
         echo "$output"
       
     - name: Set env RELEASE_VERSION
@@ -43,8 +43,8 @@ jobs:
         echo ${{ env.RELEASE_VERSION }}
         echo $RELEASE_VERSION_NUMBER
         echo ${{ env.RELEASE_VERSION_NUMBER }}
-        echo $FILE_PATH
-        echo ${{ FILE_PATH }}
+        echo $RELEASE_PATH
+        echo ${{ env.RELEASE_PATH }}
       
 
     - name: Create Release
