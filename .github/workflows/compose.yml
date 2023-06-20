@@ -25,7 +25,7 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew build
     - name: package with Gradle
-      run: ./gradlew clean | ./gradlew packageMsi
+      run: ./gradlew packageMsi
       
     - name: Set env RELEASE_VERSION
       run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
